@@ -1140,14 +1140,23 @@ footer{border-top:1px solid var(--line);padding-block:44px;background:var(--bg)}
     node.querySelectorAll("[data-bars]").forEach(animateBars);
     if(node.hasAttribute && node.hasAttribute("data-bars")) animateBars(node);
   }
+  function resetVisual(node){
+    // remet cercles/barres/compteurs à zéro (sans transition) pour pouvoir rejouer
+    node.querySelectorAll(".ring[data-ring] .fg").forEach(function(fg){ fg.style.transition="none"; fg.style.strokeDashoffset=String(C); });
+    node.querySelectorAll("[data-bars] .bar").forEach(function(b){ b.style.transition="none"; b.style.height="0%"; });
+    node.querySelectorAll("[data-count]").forEach(function(el){ el.textContent="0"+(el.getAttribute("data-suffix")||""); });
+    void node.getBoundingClientRect(); // reflow
+    node.querySelectorAll(".ring[data-ring] .fg, [data-bars] .bar").forEach(function(el){ el.style.transition=""; });
+  }
 
   if("IntersectionObserver" in window){
     var vio = new IntersectionObserver(function(entries){
       entries.forEach(function(e){
-        if(e.isIntersecting){ runVisual(e.target); vio.unobserve(e.target); }
+        if(e.isIntersecting){ runVisual(e.target); if(reduce) vio.unobserve(e.target); }
+        else if(!reduce){ resetVisual(e.target); }
       });
     }, {threshold:0.3});
-    // observe the containers that hold visuals
+    // observe the containers that hold visuals (rejeu à chaque entrée dans l'écran)
     document.querySelectorAll(".hero-vis, .sol-visual").forEach(function(n){ vio.observe(n); });
   } else {
     document.querySelectorAll(".hero-vis, .sol-visual").forEach(runVisual);
